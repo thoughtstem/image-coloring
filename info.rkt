@@ -1,5 +1,5 @@
 #lang info
-(define collection "image-colors")
+(define collection "image-coloring")
 (define deps '("base"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/image-colors.scrbl" ())))
