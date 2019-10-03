@@ -1,14 +1,14 @@
 #lang scribble/manual
-@require[@for-label[image-colors
+@require[@for-label[image-coloring
                     2htdp/image
                     racket/base]]
 
-@title{image-colors}
+@title{image-coloring}
 @author{thoughtstem}
 
 @(require "../main.rkt" 2htdp/image animal-assets)
 
-@defmodule[image-colors]
+@defmodule[image-coloring]
 
 This is for doing basic color shifting transformations on @racket[image?] values.  It does this by converting them into bitmaps and operating on the pixels.  What is returned is a bitmap.  So keep that in mind if you are intending to do operations like @racket[scale] downstream of, say, a @racket[change-hue].  If you scale up after the hue shift, you'll see a blury image.  If you scale up before, the color shift will have to operate on more pixels.   
 
@@ -17,7 +17,7 @@ This is for doing basic color shifting transformations on @racket[image?] values
 
   @codeblock{
     #lang racket
-    (require image-colors)
+    (require image-coloring)
 
     (change-hue 50 (circle 40 'solid 'red))
   }
@@ -30,7 +30,7 @@ This is for doing basic color shifting transformations on @racket[image?] values
   
   @codeblock{
     #lang racket
-    (require image-colors)
+    (require image-coloring)
     (require animal-assets)
 
     (change-hue 50 chicken-sheet)
@@ -50,7 +50,7 @@ This is for doing basic color shifting transformations on @racket[image?] values
 
   @codeblock{
     #lang racket
-    (require image-colors)
+    (require image-coloring)
     (require animal-assets)
 
     (change-hue 50 chicken-sheet)
