@@ -3,17 +3,25 @@
 ;Note: This is aBlender's code from game-enine, (finally!) pulled out into its own package (Sep 29, 2019)
 ; I mostly just changed the names and added the sample image
 
-(provide (rename-out [ change-img-hue change-hue])     ; 0 to 360
-         (rename-out [ change-img-sat change-saturation])     ; 0 to 100
-         (rename-out [ change-img-bright change-brightness])  ; 0 to 100
+(provide (rename-out [change-img-hue change-hue])     ; 0 to 360
+         (rename-out [change-img-sat change-saturation])     ; 0 to 100
+         (rename-out [change-img-bright change-brightness])  ; 0 to 100
+         (rename-out [change-img-alpha change-alpha]) ; 0 to 255
+
+         (rename-out [set-img-hue set-hue])
+         (rename-out [set-img-sat set-saturation])
+         (rename-out [set-img-bright set-brightness])
+         (rename-out [set-img-alpha set-alpha])
 
          change-img-hue
          change-img-sat
          change-img-bright
+         change-img-alpha
 
          set-img-hue        ; 0 to 360
          set-img-sat        ; 0 to 100
          set-img-bright     ; 0 to 100
+         set-img-alpha      ; 0 to 255
 
          (rename-out [ tint-img tint-image])
          tint-img 
@@ -222,6 +230,7 @@
     [(= case 4) (make-color T P B a)]
     [(= case 5) (make-color B P Q a)]))
 
+; ===== PIXEL CHANGERS =====
 (define (change-hue amount c)
   ;(define hsb-c (color->color-hsb c))
   ;(define new-hue (modulo (+ (color-hsb-hue hsb-c) amount) 360))
@@ -249,6 +258,13 @@
         (hsb->color (struct-copy color-hsb hsb-c
                                  [bright (max 0 (min 100  (+ (color-hsb-bright hsb-c) amount)))])))))
 
+(define (change-alpha amount c)
+  (if (= (color-alpha c) 0)
+      c
+      (struct-copy color c
+                   [alpha (max 0 (min 255  (+ (color-alpha c) amount)))])))
+
+; ===== PIXEL SETTERS =====
 (define (set-hue amount c)
   (if (= (color-alpha c) 0)
       c
@@ -270,6 +286,13 @@
         (hsb->color (struct-copy color-hsb hsb-c
                                  [bright (max 0 (min 100 amount))])))))
 
+(define (set-alpha amount c)
+  (if (= (color-alpha c) 0)
+      c
+      (struct-copy color c
+                   [alpha (max 0 (min 255 amount))])))
+
+; ===== IMAGE CHANGERS =====
 (define (change-img-hue amount image)
   (define image-list (image->color-list image))
   (color-list->bitmap (map (curry change-hue amount) image-list) (image-width image) (image-height image)))
@@ -282,6 +305,12 @@
   (define image-list (image->color-list image))
   (color-list->bitmap (map (curry change-bright amount) image-list) (image-width image) (image-height image)))
 
+(define (change-img-alpha amount image)
+  (define image-list (image->color-list image))
+  (color-list->bitmap (map (curry change-alpha amount) image-list) (image-width image) (image-height image)))
+
+
+; ===== IMAGE SETTERS =====
 (define (set-img-hue amount image)
   (define image-list (image->color-list image))
   (color-list->bitmap (map (curry set-hue amount) image-list) (image-width image) (image-height image)))
@@ -293,6 +322,11 @@
 (define (set-img-bright amount image)
   (define image-list (image->color-list image))
   (color-list->bitmap (map (curry set-bright amount) image-list) (image-width image) (image-height image)))
+
+(define (set-img-alpha amount image)
+  (define image-list (image->color-list image))
+  (color-list->bitmap (map (curry set-alpha amount) image-list) (image-width image) (image-height image)))
+
 
 (define/contract (scale-to-fit i w)
   (-> image? number? image?)
