@@ -40,7 +40,15 @@
          (struct-out color-hsb)
          make-color-hsb
 
-         hsb->color)
+         hsb->color
+
+         any-color-stx->rgb-list
+         any-color-stx->rgba-string
+         any-color-stx->color-obj
+         hex->rgb-list
+         color-name->rgb-list
+         any-color-stx->hex
+         decimal->hex)
 
 (require 2htdp/image)
 
@@ -335,9 +343,7 @@
                           (image-height i)))
   (scale (/ w longer-side) i))
 
-;useful function! provide out or put elsewhere
-;creates silhouettes of an image -- turning every pixel
-;that is not 100% transparent to one solid color
+;turns all non-transparent one color (default, black)
 (define (iconify-img img [t-color 'black])
 
   (define target-color (if (color? t-color)
@@ -350,6 +356,87 @@
   (define original-list (image->color-list img))
   (define final-list (map maybe-color-pixel original-list))
   (color-list->bitmap final-list (image-width img) (image-height img)))
+
+; === sonnynajar's color name processing functions take from vr-engine===
+
+(define (any-color-stx->rgb-list x)
+  (cond
+    [(object? x) (color-object->rgb-list x)]
+    [(string? x) (if (char=? #\# (string-ref x 0))
+                     (hex->rgb-list x)
+                     (color-name->rgb-list
+                      (string-replace (string-downcase x) "-" "")))]
+    [(symbol? x)(color-name->rgb-list x)]
+    [else x]))
+
+(define (color-object->rgb-list color)
+  (define c (send color render))
+  (define l (string-split (string-trim (string-trim c "rgba(") ")") ","))
+  (list (string->number (string-trim (first l) " "))
+        (string->number (string-trim (second l) " "))
+        (string->number (string-trim (third l) " "))))
+
+(define (hex->rgb-list x)
+  (define l (string->list (string-trim x "#")))
+  (define r (string (first l) (second l)))
+  (define g (string (third l) (fourth l)))
+  (define b (string (fifth l) (sixth l)))
+  (list (string->number (~a "#x" r))
+        (string->number (~a "#x" g))
+        (string->number (~a "#x" b))))
+
+(define (color-name->rgb-list c)
+  (define new-c (name->color c))
+  (define r (color-red new-c))
+  (define g (color-green new-c))
+  (define b (color-blue new-c))
+  (list r g b))
+
+(define (any-color-stx->hex color)
+  (define c (any-color-stx->rgb-list color))
+  (define r (decimal->hex (first c)))
+  (define g (decimal->hex (second c)))
+  (define b (decimal->hex (third c)))
+  (~a "#"
+      (if (eq? r "") "00" r)
+      (if (eq? g "") "00" g)
+      (if (eq? b "") "00" b)))
+  
+
+(define (any-color-stx->color-obj color)
+  (define c (any-color-stx->rgb-list color))
+  (if (object? c)
+      c
+      (make-color (first c) (second c) (third c))))
+
+(define (any-color-stx->rgba-string color)
+  (define c (any-color-stx->rgb-list color))
+  (if (object? c)
+      (send c render)
+      (if (false? c)
+          c
+          (~a "rgba(" (first c) "," (second c) "," (third c) ",255)"))))
+
+(define (decimal->hex x (s ""))
+  (define q 0)
+  (define r 0)
+  (define final s)
+  (if (> x 0)
+      (begin (set! q (quotient x 16))
+             (set! r (remainder x 16))
+  
+             (set! r (cond
+                       [(= r 10) "a"]
+                       [(= r 11) "b"]
+                       [(= r 12) "c"]
+                       [(= r 13) "d"]
+                       [(= r 14) "e"]
+                       [(= r 15) "f"]
+                       [else r]))
+             (set! final (~a r final))
+             (decimal->hex q final))
+      final))
+
 
 ;(define (grayscale-img img)
 ;  (define image-list (image->color-list img))
