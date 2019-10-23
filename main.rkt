@@ -42,13 +42,9 @@
 
          hsb->color
 
-         any-color-stx->rgb-list
-         any-color-stx->rgba-string
-         any-color-stx->color-obj
-         hex->rgb-list
-         color-name->rgb-list
-         any-color-stx->hex
-         decimal->hex)
+         hex->color
+         color->hex-string
+         (rename-out [color->hex-string color->hex]))
 
 (require 2htdp/image)
 
@@ -357,87 +353,44 @@
   (define final-list (map maybe-color-pixel original-list))
   (color-list->bitmap final-list (image-width img) (image-height img)))
 
-; === sonnynajar's color name processing functions take from vr-engine===
+; ===== HEX COLOR CONVERTERS =====
 
-(define (any-color-stx->rgb-list x)
-  (cond
-    [(object? x) (color-object->rgb-list x)]
-    [(string? x) (if (char=? #\# (string-ref x 0))
-                     (hex->rgb-list x)
-                     (color-name->rgb-list
-                      (string-replace (string-downcase x) "-" "")))]
-    [(symbol? x)(color-name->rgb-list x)]
-    [else x]))
-
-(define (color-object->rgb-list color)
-  (define c (send color render))
-  (define l (string-split (string-trim (string-trim c "rgba(") ")") ","))
-  (list (string->number (string-trim (first l) " "))
-        (string->number (string-trim (second l) " "))
-        (string->number (string-trim (third l) " "))))
-
-(define (hex->rgb-list x)
-  (define l (string->list (string-trim x "#")))
-  (define r (string (first l) (second l)))
-  (define g (string (third l) (fourth l)))
-  (define b (string (fifth l) (sixth l)))
-  (list (string->number (~a "#x" r))
-        (string->number (~a "#x" g))
-        (string->number (~a "#x" b))))
-
-(define (color-name->rgb-list c)
-  (define new-c (name->color c))
-  (define r (color-red new-c))
-  (define g (color-green new-c))
-  (define b (color-blue new-c))
-  (list r g b))
-
-(define (any-color-stx->hex color)
-  (define c (any-color-stx->rgb-list color))
-  (define r (decimal->hex (first c)))
-  (define g (decimal->hex (second c)))
-  (define b (decimal->hex (third c)))
-  (~a "#"
-      (if (eq? r "") "00" r)
-      (if (eq? g "") "00" g)
-      (if (eq? b "") "00" b)))
+; converts a hex number or string to a color struct
+; hex can be either a number or a hex string with 6 or 8 digits
+(define (hex->color hex)
+  (define hex-string
+    (cond [(number? hex) (number->string hex 16)]
+          [(string? hex) (string-trim hex "#x")]
+          [else (error "That was not a number or string!")]))
+  (define hex-string-list
+    (string->list hex-string))
   
-
-(define (any-color-stx->color-obj color)
-  (define c (any-color-stx->rgb-list color))
-  (if (object? c)
-      c
-      (make-color (first c) (second c) (third c))))
-
-(define (any-color-stx->rgba-string color)
-  (define c (any-color-stx->rgb-list color))
-  (if (object? c)
-      (send c render)
-      (if (false? c)
-          c
-          (~a "rgba(" (first c) "," (second c) "," (third c) ",255)"))))
-
-(define (decimal->hex x (s ""))
-  (define q 0)
-  (define r 0)
-  (define final s)
-  (if (> x 0)
-      (begin (set! q (quotient x 16))
-             (set! r (remainder x 16))
-  
-             (set! r (cond
-                       [(= r 10) "a"]
-                       [(= r 11) "b"]
-                       [(= r 12) "c"]
-                       [(= r 13) "d"]
-                       [(= r 14) "e"]
-                       [(= r 15) "f"]
-                       [else r]))
-             (set! final (~a r final))
-             (decimal->hex q final))
-      final))
+  (define rgba-hex-string-list
+    (list (string (first hex-string-list) (second hex-string-list))
+          (string (third hex-string-list) (fourth hex-string-list))
+          (string (fifth hex-string-list) (sixth hex-string-list))
+          (if (>= (length hex-string-list) 8)
+              (string (seventh hex-string-list) (eighth hex-string-list))
+              "FF")))
+  (apply make-color (map (curryr string->number 16) rgba-hex-string-list)))
 
 
-;(define (grayscale-img img)
-;  (define image-list (image->color-list img))
-;  (color-list->bitmap (map (curry
+; converts a color string, symbol, or color struct to a hex string
+; set #:alpha? to #t to include alpha channel
+(define (color->hex-string color #:alpha? [alpha? #f])
+  (define c (cond [(or (string? color)
+                       (symbol? color)) (name->color color)]
+                  [(color? color) color]
+                  [else "That wasn't a string, symbol, or color!"]))
+  (define (pad-zero str)
+    (if (equal? str "0")
+        "00"
+        str))
+  (define rgb-string
+    (string-append (pad-zero (number->string (color-red c) 16))
+                   (pad-zero (number->string (color-green c) 16))
+                   (pad-zero (number->string (color-blue c) 16))))
+  (if alpha?
+      (string-append rgb-string
+                     (pad-zero (number->string (color-alpha c) 16)))
+      rgb-string))
