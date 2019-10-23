@@ -6,7 +6,7 @@
 (provide (rename-out [change-img-hue change-hue])     ; 0 to 360
          (rename-out [change-img-sat change-saturation])     ; 0 to 100
          (rename-out [change-img-bright change-brightness])  ; 0 to 100
-         (rename-out [change-img-alpha change-alpha]) ; 0 to 255
+         (rename-out [change-img-alpha change-alpha]) ; -255 to 255
 
          (rename-out [set-img-hue set-hue])
          (rename-out [set-img-sat set-saturation])

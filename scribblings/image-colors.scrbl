@@ -6,7 +6,9 @@
 @title{image-coloring}
 @author{thoughtstem}
 
-@(require "../main.rkt" 2htdp/image animal-assets)
+@(require "../main.rkt" 2htdp/image)
+
+@(define chicken-sheet (bitmap "./img/chicken-sheet.png"))
 
 @defmodule[image-coloring]
 
@@ -31,7 +33,6 @@ This is for doing basic color shifting transformations on @racket[image?] values
   @codeblock{
     #lang racket
     (require image-coloring)
-    (require animal-assets)
 
     (change-hue 50 chicken-sheet)
   }
@@ -51,9 +52,8 @@ This is for doing basic color shifting transformations on @racket[image?] values
   @codeblock{
     #lang racket
     (require image-coloring)
-    (require animal-assets)
 
-    (change-hue 50 chicken-sheet)
+    (tint-image "red" chicken-sheet)
   }
 
   Gives us:
