@@ -3,16 +3,12 @@
 ;Note: This is aBlender's code from game-enine, (finally!) pulled out into its own package (Sep 29, 2019)
 ; I mostly just changed the names and added the sample image
 
-(provide (rename-out [change-img-hue change-hue])     ; 0 to 360
+(provide ; ==== IMAGE FUNCTIONS ====
+         (rename-out [change-img-hue change-hue])     ; 0 to 360
          (rename-out [change-img-sat change-saturation])     ; 0 to 100
          (rename-out [change-img-bright change-brightness])  ; 0 to 100
          (rename-out [change-img-alpha change-alpha]) ; -255 to 255
-
-         (rename-out [set-img-hue set-hue])
-         (rename-out [set-img-sat set-saturation])
-         (rename-out [set-img-bright set-brightness])
-         (rename-out [set-img-alpha set-alpha])
-
+ 
          change-img-hue
          change-img-sat
          change-img-bright
@@ -27,16 +23,36 @@
          tint-img 
          mask
          mask-pixel
+         scale-to-fit
+         iconify-img
+
+         ; ==== COLOR FUNCTIONS ====
+         (rename-out [set-img-hue set-hue])
+         (rename-out [set-img-sat set-saturation])
+         (rename-out [set-img-bright set-brightness])
+         (rename-out [set-img-alpha set-alpha])
+
+         (rename-out [change-hue change-color-hue])
+         (rename-out [change-sat change-color-saturation])
+         (rename-out [change-bright change-color-brightness])
+         (rename-out [change-alpha change-color-alpha])
+
+         (rename-out [set-hue set-color-hue])
+         (rename-out [set-sat set-color-saturation])
+         (rename-out [set-bright set-color-brightness])
+         (rename-out [set-alpha set-color-alpha])
+
          name->color
          name->color-hsb
          name->hue
          name->sat
 
+         color->color-hsb
          rgb->hue
+         rgb->sat
+         rgb->bright
          make-color-hue
-         scale-to-fit
-         iconify-img
-
+         
          (struct-out color-hsb)
          make-color-hsb
 
@@ -360,7 +376,7 @@
 (define (hex->color hex)
   (define hex-string
     (cond [(number? hex) (number->string hex 16)]
-          [(string? hex) (string-trim hex "#x")]
+          [(string? hex) (string-trim (string-trim hex "#x") "#")]
           [else (error "That was not a number or string!")]))
   (define hex-string-list
     (string->list hex-string))
@@ -383,9 +399,7 @@
                   [(color? color) color]
                   [else "That wasn't a string, symbol, or color!"]))
   (define (pad-zero str)
-    (if (equal? str "0")
-        "00"
-        str))
+    (~a str #:width 2 #:align 'right #:pad-string "0"))
   (define rgb-string
     (string-append (pad-zero (number->string (color-red c) 16))
                    (pad-zero (number->string (color-green c) 16))
