@@ -14,23 +14,29 @@
          change-img-bright
          change-img-alpha
 
+         (rename-out [set-img-hue set-hue])
+         (rename-out [set-img-sat set-saturation])
+         (rename-out [set-img-bright set-brightness])
+         (rename-out [set-img-alpha set-alpha])
+
          set-img-hue        ; 0 to 360
          set-img-sat        ; 0 to 100
          set-img-bright     ; 0 to 100
          set-img-alpha      ; 0 to 255
 
          (rename-out [ tint-img tint-image])
+         (rename-out [ set-img-color set-image-color])
+         
          tint-img 
          mask
          mask-pixel
          scale-to-fit
          iconify-img
+         has-color?
+         set-img-color
 
          ; ==== COLOR FUNCTIONS ====
-         (rename-out [set-img-hue set-hue])
-         (rename-out [set-img-sat set-saturation])
-         (rename-out [set-img-bright set-brightness])
-         (rename-out [set-img-alpha set-alpha])
+         
 
          (rename-out [change-hue change-color-hue])
          (rename-out [change-sat change-color-saturation])
@@ -368,6 +374,25 @@
   (define original-list (image->color-list img))
   (define final-list (map maybe-color-pixel original-list))
   (color-list->bitmap final-list (image-width img) (image-height img)))
+
+(define (has-color? image [threshold 0.2])
+  (define (transparent-pixel? c)
+    (= (color-alpha c) 0))
+  (define (color-pixel? hsb-color)
+    (and (> (color-hsb-sat hsb-color)    50)
+         (> (color-hsb-bright hsb-color) 50)))
+  
+  (define hsb-image-list (map color->color-hsb (filter-not transparent-pixel? (image->color-list image))))
+  
+  (define color-list (filter color-pixel? hsb-image-list))
+  (>= (length color-list) (* (length hsb-image-list) threshold)))
+
+(define (set-img-color color-name image)
+  (if (has-color? image)
+      (let ([hue (color-hsb-hue (name->color-hsb color-name))])
+        (set-img-hue hue image))
+      (tint-img color-name image)))
+
 
 ; ===== HEX COLOR CONVERTERS =====
 
